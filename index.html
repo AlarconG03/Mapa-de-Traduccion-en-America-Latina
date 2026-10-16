@@ -2900,9 +2900,76 @@
         });
         
 
-        window.addEventListener('resize', function() { 
-            if(typeof chart11 !== 'undefined') chart11.resize(); 
+        // =========================================================
+        // REDIMENSIONAMIENTO RESPONSIVO DE TODAS LAS VISUALIZACIONES
+        // =========================================================
+
+        function resizeAllCharts() {
+            const chartIds = [
+                'vis11', // Balance de la Edición
+                'vis10', // Red Global de la Traducción
+                'vis1',  // Pulso Editorial
+                'vis3',  // Gravedad del Lenguaje
+                'vis4',  // Cronología de la Traducción
+                'vis5',  // Ecosistemas de Origen
+                'vis12', // Pirámide Editorial
+                'vis7',  // Puente Bilingüe
+                'vis8',  // Divergencias Editoriales
+                'vis6',  // Metamorfosis Literaria
+                'vis9'   // Anatomía del Catálogo
+            ];
+
+            chartIds.forEach(id => {
+                const container = document.getElementById(id);
+
+                if (!container) return;
+
+                const chart = echarts.getInstanceByDom(container);
+
+                if (chart && !chart.isDisposed()) {
+                    chart.resize();
+                }
+            });
+        }
+
+        // Evitar ejecuciones excesivas mientras cambia el tamaño
+        // de la ventana.
+        let resizeFrame = null;
+
+        window.addEventListener('resize', function() {
+            if (resizeFrame !== null) {
+                cancelAnimationFrame(resizeFrame);
+            }
+
+            resizeFrame = requestAnimationFrame(function() {
+                resizeAllCharts();
+                resizeFrame = null;
+            });
         });
+
+        // Reajustar cuando la página termina de cargar.
+        window.addEventListener('load', resizeAllCharts);
+
+        // Detectar cambios de tamaño de los propios contenedores,
+        // incluso cuando no se redimensiona la ventana.
+        if (typeof ResizeObserver !== 'undefined') {
+            const chartResizeObserver = new ResizeObserver(entries => {
+                entries.forEach(entry => {
+                    const chart = echarts.getInstanceByDom(entry.target);
+
+                    if (chart && !chart.isDisposed()) {
+                        chart.resize();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.chart-container').forEach(container => {
+                chartResizeObserver.observe(container);
+            });
+        }
+
+        // Ajuste inicial, una vez registrado el manejador.
+        requestAnimationFrame(resizeAllCharts);
     </script>
 </body>
 </html>
